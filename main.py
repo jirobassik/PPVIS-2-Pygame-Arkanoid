@@ -15,6 +15,8 @@ class Brick(pygame.sprite.Sprite):
             self.image = pygame.image.load("sprites/Brick_red.png")
         if color == 3:
             self.image = pygame.image.load("sprites/Brick_yellow.png")
+        if color == 4:
+            self.image = pygame.image.load("sprites/Brick_blue.png")
         self.image = pygame.transform.scale(self.image, (70, 30)).convert_alpha()
         self.rect = self.image.get_rect()
         #self.rect = pygame.Rect(self.x, self.y, 60, 20)
@@ -170,6 +172,8 @@ def create_bricks():
                 bricks.append(Brick(20 + w * 100, h, 2))
             elif brick == "3":
                 bricks.append(Brick(20 + w * 100, h, 3))
+            elif brick == "4":
+                bricks.append(Brick(20 + w * 100, h, 4))
             w += 1
             if w == 5:
                 w = 0
