@@ -50,6 +50,7 @@ class Bar(pygame.sprite.Sprite):
             self.size_x = 70
             self.image = pygame.transform.scale(self.image, (self.size_x, 20))
             self.power_time = pygame.time.get_ticks()
+            powerup_sound_done.play()
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
@@ -92,6 +93,7 @@ class Ball(pygame.sprite.Sprite):
         if (self.speed == 4 or self.speed == 1) and pygame.time.get_ticks() - self.power_time > 10000:
             self.speed = 2
             self.power_time = pygame.time.get_ticks()
+            powerup_sound_done.play()
 
         if not self.moving:
             self.x = bar.rect.centerx - 4
@@ -100,16 +102,19 @@ class Ball(pygame.sprite.Sprite):
                 ball.x -= self.speed
                 if ball.x < 3:
                     ball_x = "right"
+                    pong_bar_sound.play()
             if ball_y == 'down':
                 ball.y += self.speed
             if ball_y == 'up':
                 ball.y -= self.speed
                 if ball.y < 3:
                     ball_y = 'down'
+                    pong_bar_sound.play()
             if ball_x == "right":
                 ball.x += self.speed
                 if ball.x > 490:
                     ball_x = "left"
+                    pong_bar_sound.play()
         #gfxdraw.filled_circle(screen, ball.x, ball.y, 5, GREEN)
         #self.rect = pygame.Rect(self.x, self.y, 10, 10)
         self.rect = self.image.get_rect()
@@ -118,6 +123,9 @@ class Ball(pygame.sprite.Sprite):
 
     def start(self):
         self.moving = True
+
+    def get_self_moving(self):
+        return self.moving
 
     def get_speed(self):
         return self.speed
@@ -165,17 +173,21 @@ class Score:
         if self.plus_score == 40 and pygame.time.get_ticks() - self.power_time > 10000:
             self.plus_score = 20
             self.power_time = pygame.time.get_ticks()
+            powerup_sound_done.play()
 
 def collision():
     global ball, bar, ball_y, ball_x
 
     if ball.rect.colliderect(bar):
         ball_y = "up"
+        if ball.get_self_moving():
+            pong_bar_sound.play()
 
     for n, brick in enumerate(bricks):
         if ball.rect.colliderect(brick):
             score.plus()
-            if random.random() > 0.65:
+            pong_sound.play()
+            if random.random() > 0.7:
                 pow = Pow(brick.rect.center)
                 all_sprites.add(pow)
                 powerups.add(pow)
@@ -209,14 +221,19 @@ def collision_powerups():
     for hit in hits:
         if hit.type == 'faster':
             ball.move_faster()
+            powerup_sound.play()
         if hit.type == 'slower':
             ball.move_slover()
+            powerup_sound.play()
         if hit.type == 'big_bar':
             bar.big_bar()
+            powerup_sound.play()
         if hit.type == 'small_bar':
             bar.small_bar()
+            powerup_sound.play()
         if hit.type == 'x2':
             score.double_score()
+            powerup_sound.play()
 
 
 font_name = pygame.font.match_font('arial')
@@ -311,6 +328,16 @@ powerup_images = {'slower': pygame.transform.scale(image_1, (25, 25)).convert_al
                   'small_bar': pygame.transform.scale(image_4, (20, 10)).convert_alpha(),
                   'x2': pygame.transform.scale(image_5, (25, 25)).convert_alpha()}
 """Images"""
+
+"""Sounds"""
+pong_sound = pygame.mixer.Sound('sound/pong.wav')
+pong_bar_sound = pygame.mixer.Sound('sound/pong_bar.wav')
+powerup_sound = pygame.mixer.Sound('sound/powerup.wav')
+powerup_sound_done = pygame.mixer.Sound('sound/powerup_done.wav')
+pygame.mixer.music.load('sound/music.mp3')
+pygame.mixer.music.set_volume(0.4)
+pygame.mixer.music.play(loops=-1)
+"""Sounds"""
 
 pygame.mouse.set_visible(False)
 loop = 1
