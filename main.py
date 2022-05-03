@@ -72,6 +72,11 @@ class Bar(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (self.size_x, 20))
         self.power_time = pygame.time.get_ticks()
 
+    def reset(self):
+        self.x = 215
+        self.y = 480
+        self.size_x = 70
+        self.image = pygame.transform.scale(self.image, (self.size_x, 20))
 
 class Ball(pygame.sprite.Sprite):
     """Draw Ball"""
@@ -138,6 +143,12 @@ class Ball(pygame.sprite.Sprite):
         self.speed = 1
         self.power_time = pygame.time.get_ticks()
 
+    def reset(self):
+        self.x = 25
+        self.y = 471
+        self.speed = 2
+        self.moving = False
+
 class Pow(pygame.sprite.Sprite):
     """Power ups"""
     def __init__(self, center):
@@ -183,13 +194,13 @@ def collision():
         if ball.get_self_moving():
             pong_bar_sound.play()
 
-    for n, brick in enumerate(bricks):
+    for n, brick in enumerate(spr.get_brick()):
         if ball.rect.colliderect(brick):
             score.plus()
             pong_sound.play()
             if random.random() > 0.7:
                 pow = Pow(brick.rect.center)
-                all_sprites.add(pow)
+                spr.get_sprites().add(pow)
                 powerups.add(pow)
             if ball_y == "up":
                 if ball.y == (brick.y + 20 - ball.get_speed()):
@@ -207,11 +218,12 @@ def collision():
                         ball_x = "right"
                     else:
                         ball_x = "left"
-            bricks.pop(n)
+            spr.get_brick().pop(n)
             brick.kill()
-            if not bricks:
-                pygame.quit()
-                sys.exit()
+            if not spr.get_brick():
+                #pygame.quit()
+                #sys.exit()
+                spr.new_lvl()
 
     if ball.y > 500:
         ball.xb, ball.y = 500, 300
@@ -265,8 +277,8 @@ def exit_game(event):
         # print("Speed up")'''
 
 
-def create_bricks():
-    with open('levels/lvl1', 'r') as f:
+def create_bricks(name_lvl):
+    with open(name_lvl, 'r') as f:
         file_blocks = f.read().splitlines()[0:]
     bricks = []
     h = 30
@@ -289,30 +301,48 @@ def create_bricks():
 
 
 def show_bricks():
-    for brick in bricks:
+    for brick in spr.get_brick():
         brick.update()
 
+class Update_sprites:
+    def __init__(self):
+        self.all_sprites = pygame.sprite.Group()
 
-all_sprites = pygame.sprite.Group()
+    def new_lvl(self):
+        self.all_sprites = pygame.sprite.Group()
+        bar.reset()
+        ball.reset()
+        self.brick = create_bricks(lvls.pop(0))
+        self.all_sprites.add(self.brick, ball, bar)
+
+    def get_sprites(self):
+        return self.all_sprites
+
+    def get_brick(self):
+        return self.brick
+
+
+lvls = ['levels/lvl1', 'levels/lvl2']
+
+#all_sprites = pygame.sprite.Group()
 powerups = pygame.sprite.Group()
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 ball_x = 'left'
 ball_y = 'down'
-scorep1 = 0
-scorep2 = 0
 vel_bal = 2
 score = Score()
 pygame.init()
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((500, 500))
 pygame.display.set_caption("Game")
+spr = Update_sprites()
 startx = 0
 bar = Bar(215, 480)
 ball = Ball(25, 471)
-bricks = create_bricks()
-all_sprites.add(bricks, ball, bar)
+spr.new_lvl()
+
 
 """Images"""
 background = pygame.image.load("background/space.jpg")
@@ -361,7 +391,7 @@ while loop:
     #startx = bar.x
     show_bricks()
     collision_powerups()
-    all_sprites.draw(screen)
+    spr.get_sprites().draw(screen)
     draw_text(screen, str(score.get_score()), 18, 510 / 2, 10)
     pygame.display.update()
     clock.tick(120)
