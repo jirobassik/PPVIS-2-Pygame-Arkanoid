@@ -5,8 +5,10 @@ import sys
 
 WHITE = (255, 255, 255)
 
+
 class Brick(pygame.sprite.Sprite):
     """Draw Brick"""
+
     def __init__(self, x, y, color):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
@@ -29,8 +31,10 @@ class Brick(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
+
 class Bar(pygame.sprite.Sprite):
     """Draw Player"""
+
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
@@ -85,12 +89,16 @@ class Bar(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (self.size_x, 20))
         self.rect = self.image.get_rect()
 
+
 class Ball(pygame.sprite.Sprite):
     """Draw Ball"""
+
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
+        self.ball_x = "left"
+        self.ball_y = "up"
         self.speed = 2
         self.image = pygame.image.load("sprites/ball.png")
         self.image = pygame.transform.scale(self.image, (12, 12)).convert_alpha()
@@ -100,8 +108,6 @@ class Ball(pygame.sprite.Sprite):
 
     def update(self):
         """The ball moves"""
-        global ball
-        global ball_x, ball_y
         if (self.speed == 4 or self.speed == 1) and pygame.time.get_ticks() - self.power_time > 10000:
             self.speed = 2
             self.power_time = pygame.time.get_ticks()
@@ -110,22 +116,22 @@ class Ball(pygame.sprite.Sprite):
         if not self.moving:
             self.x = bar.rect.centerx - 4
         else:
-            if ball_x == "left":
-                ball.x -= self.speed
-                if ball.x < 3:
-                    ball_x = "right"
+            if self.ball_x == "left":
+                self.x -= self.speed
+                if self.x < 3:
+                    self.ball_x = "right"
                     pong_bar_sound.play()
-            if ball_y == 'down':
-                ball.y += self.speed
-            if ball_y == 'up':
-                ball.y -= self.speed
-                if ball.y < 3:
-                    ball_y = 'down'
+            if self.ball_y == 'down':
+                self.y += self.speed
+            if self.ball_y == 'up':
+                self.y -= self.speed
+                if self.y < 3:
+                    self.ball_y = 'down'
                     pong_bar_sound.play()
-            if ball_x == "right":
-                ball.x += self.speed
-                if ball.x > 490:
-                    ball_x = "left"
+            if self.ball_x == "right":
+                self.x += self.speed
+                if self.x > 490:
+                    self.ball_x = "left"
                     pong_bar_sound.play()
         self.rect = self.image.get_rect()
         self.rect.x = ball.x
@@ -140,6 +146,18 @@ class Ball(pygame.sprite.Sprite):
     def get_speed(self):
         return self.speed
 
+    def get_ball_y(self):
+        return self.ball_y
+
+    def set_ball_y(self, ball_y):
+        self.ball_y = ball_y
+
+    def get_ball_x(self):
+        return self.ball_x
+
+    def set_ball_x(self, ball_x):
+        self.ball_x = ball_x
+
     def move_faster(self):
         self.speed = 4
         self.power_time = pygame.time.get_ticks()
@@ -153,9 +171,12 @@ class Ball(pygame.sprite.Sprite):
         self.y = 471
         self.speed = 2
         self.moving = False
+        self.ball_x = "left"
+
 
 class Pow(pygame.sprite.Sprite):
     """Power ups"""
+
     def __init__(self, center):
         pygame.sprite.Sprite.__init__(self)
         self.type = random.choice(['slower', 'faster', 'big_bar', 'small_bar', 'x2'])
@@ -168,6 +189,7 @@ class Pow(pygame.sprite.Sprite):
         self.rect.y += self.speedy
         if self.rect.top > 500:
             self.kill()
+
 
 class Score:
     def __init__(self):
@@ -191,17 +213,24 @@ class Score:
             self.power_time = pygame.time.get_ticks()
             powerup_sound_done.play()
 
+    def reset(self):
+        self.score = 0
+
+
 class Update_sprites:
     def __init__(self):
         self.all_sprites = pygame.sprite.Group()
         self.brick = None
         self.i = 0
+        self.lvls = ['levels/lvl1', 'levels/lvl2', 'levels/lvl3',
+                     'levels/lvl4', 'levels/lvl5', 'levels/lvl6',
+                     'levels/lvl7', 'levels/lvl8', 'levels/lvl9', 'levels/lvl10']
 
     def new_lvl(self):
         self.all_sprites = pygame.sprite.Group()
         bar.reset()
         ball.reset()
-        self.brick = create_bricks(lvls.pop(0))
+        self.brick = create_bricks(self.lvls.pop(0))
         self.all_sprites.add(self.brick, ball, bar)
         self.print_new_lvl()
 
@@ -217,11 +246,27 @@ class Update_sprites:
     def get_brick(self):
         return self.brick
 
-def collision():
-    global ball, bar, ball_y, ball_x
+    def reset(self):
+        self.all_sprites = pygame.sprite.Group()
+        self.brick = None
+        self.i = 0
+        self.lvls = ['levels/lvl1', 'levels/lvl2', 'levels/lvl3',
+                     'levels/lvl4', 'levels/lvl5', 'levels/lvl6',
+                     'levels/lvl7', 'levels/lvl8', 'levels/lvl9', 'levels/lvl10']
 
+    def get_lvls(self):
+        return self.lvls
+
+
+def collision():
     if ball.rect.colliderect(bar):
-        ball_y = "up"
+        if ball.y <= bar.y:
+            ball.set_ball_y("up")
+        else:
+            if ball.get_ball_x() == "left":
+                ball.set_ball_x("right")
+            else:
+                ball.set_ball_x("left")
         if ball.get_self_moving():
             pong_bar_sound.play()
 
@@ -229,30 +274,30 @@ def collision():
         if ball.rect.colliderect(brick):
             score.plus()
             pong_sound.play()
-            if random.random() > 0.7:
+            if random.random() > 0.8:
                 pow = Pow(brick.rect.center)
                 spr.get_sprites().add(pow)
                 powerups.add(pow)
-            if ball_y == "up":
+            if ball.get_ball_y() == "up":
                 if ball.y >= (brick.y + 20):
-                    ball_y = "down"
+                    ball.set_ball_y("down")
                 else:
-                    if ball_x == "left":
-                        ball_x = "right"
+                    if ball.get_ball_x() == "left":
+                        ball.set_ball_x("right")
                     else:
-                        ball_x = "left"
+                        ball.set_ball_x("left")
             else:
                 if ball.y <= brick.y:
-                    ball_y = "up"
+                    ball.set_ball_y("up")
                 else:
-                    if ball_x == "left":
-                        ball_x = "right"
+                    if ball.get_ball_x() == "left":
+                        ball.set_ball_x("right")
                     else:
-                        ball_x = "left"
+                        ball.set_ball_x("left")
             spr.get_brick().pop(n)
             brick.kill()
             if not spr.get_brick():
-                if len(lvls) > 0:
+                if len(spr.get_lvls()) > 0:
                     spr.new_lvl()
                 else:
                     pygame.quit()
@@ -260,6 +305,7 @@ def collision():
 
     if ball.y > 500:
         ball.xb, ball.y = 500, 300
+
 
 def collision_powerups():
     hits = pygame.sprite.spritecollide(bar, powerups, True)
@@ -280,6 +326,7 @@ def collision_powerups():
             score.double_score()
             powerup_sound.play()
 
+
 def exit_game(even, loo):
     if even.type == pygame.QUIT:
         loo = 0
@@ -287,6 +334,7 @@ def exit_game(even, loo):
         if even.key == pygame.K_ESCAPE:
             loo = 0
     return loo
+
 
 def create_bricks(name_lvl):
     with open(name_lvl, 'r') as f:
@@ -310,9 +358,17 @@ def create_bricks(name_lvl):
                 h += 50
     return bricks
 
+
 def show_bricks():
     for brick in spr.get_brick():
         brick.update()
+
+
+def reset_data():
+    ball.reset()
+    bar.reset()
+    spr.reset()
+    score.reset()
 
 
 font_name = pygame.font.match_font('arial')
@@ -325,9 +381,6 @@ def draw_text(surf, text, size, x, y):
 
 
 powerups = pygame.sprite.Group()
-ball_x = 'left'
-ball_y = 'down'
-vel_bal = 2
 score = Score()
 pygame.init()
 clock = pygame.time.Clock()
@@ -337,14 +390,8 @@ spr = Update_sprites()
 bar = Bar(215, 480)
 ball = Ball(25, 471)
 
-
-"""Levels"""
-lvls = ['levels/lvl1', 'levels/lvl2', 'levels/lvl3',
-        'levels/lvl4', 'levels/lvl5', 'levels/lvl6',
-        'levels/lvl7', 'levels/lvl8', 'levels/lvl9', 'levels/lvl10']
-"""Levels"""
-
 """Images"""
+background_grey = pygame.image.load("background/grey.jpg")
 background = pygame.image.load("background/space.jpg")
 image_1 = pygame.image.load("sprites/slower.png")
 image_2 = pygame.image.load("sprites/faster.png")
@@ -369,31 +416,56 @@ pygame.mixer.music.set_volume(0.4)
 pygame.mixer.music.play(loops=-1)
 """Sounds"""
 
+def reference():
+    menu.close()
+    loop = 1
+    image = pygame.image.load("background/surface.PNG")
+    image = pygame.transform.scale(image, (500, 200)).convert_alpha()
+    while loop:
+        screen.blit(background_grey, (0, 0))
+        for event in pygame.event.get():
+            loop = exit_game(event, loop)
+        image_rect = image.get_rect()
+        image_rect.midtop = (250, 250 / 2)
+        screen.blit(image, image_rect)
+        pygame.display.update()
+        clock.tick(120)
 
-spr.new_lvl()
-pygame.mouse.set_visible(False)
+def start_game():
+    pygame.mouse.set_visible(False)
+    reset_data()
+    spr.new_lvl()
+    loop = 1
+    while loop:
+        screen.blit(background, (0, 0))
+        keystate = pygame.key.get_pressed()
+        for event in pygame.event.get():
+            loop = exit_game(event, loop)
+        if keystate[pygame.K_a]:
+            bar.x -= 8
+        if keystate[pygame.K_d]:
+            bar.x += 8
+        if keystate[pygame.K_SPACE]:
+            ball.start()
+        bar.update()
+        ball.update()
+        powerups.update()
+        score.check_time()
+        collision()
+        show_bricks()
+        collision_powerups()
+        spr.get_sprites().draw(screen)
+        draw_text(screen, str(score.get_score()), 18, 510 / 2, 10)
+        spr.print_lvl()
+        pygame.display.update()
+        clock.tick(120)
 
-loop = 1
-while loop:
-    screen.blit(background, (0, 0))
-    keystate = pygame.key.get_pressed()
-    for event in pygame.event.get():
-        loop = exit_game(event, loop)
-    if keystate[pygame.K_a]:
-        bar.x -= 8
-    if keystate[pygame.K_d]:
-        bar.x += 8
-    if keystate[pygame.K_SPACE]:
-        ball.start()
-    bar.update()
-    ball.update()
-    powerups.update()
-    score.check_time()
-    collision()
-    show_bricks()
-    collision_powerups()
-    spr.get_sprites().draw(screen)
-    draw_text(screen, str(score.get_score()), 18, 510 / 2, 10)
-    spr.print_lvl()
-    pygame.display.update()
-    clock.tick(120)
+
+menu = pygame_menu.Menu('Добро пожаловать', 500, 500, theme=pygame_menu.themes.THEME_DARK)
+
+# menu.add.text_input('Name :', default='John Doe')
+# menu.add.selector('Difficulty :', [('Hard', 1), ('Easy', 2)], onchange=set_difficulty)
+menu.add.button('Начать игру', start_game)
+menu.add.button('Справка', reference)
+menu.add.button('Выход', pygame_menu.events.EXIT)
+menu.mainloop(screen)
