@@ -1,7 +1,7 @@
 import pygame
 import random
 import pygame_menu
-import sys
+import string
 
 WHITE = (255, 255, 255)
 
@@ -300,11 +300,10 @@ def collision():
                 if len(spr.get_lvls()) > 0:
                     spr.new_lvl()
                 else:
-                    pygame.quit()
-                    sys.exit()
+                    input_leaderboard()
 
     if ball.y > 500:
-        ball.xb, ball.y = 500, 300
+        input_leaderboard()
 
 
 def collision_powerups():
@@ -380,6 +379,7 @@ def draw_text(surf, text, size, x, y):
     surf.blit(text_surface, text_rect)
 
 
+num = 0
 powerups = pygame.sprite.Group()
 score = Score()
 pygame.init()
@@ -417,19 +417,76 @@ pygame.mixer.music.play(loops=-1)
 """Sounds"""
 
 def reference():
-    menu.close()
-    loop = 1
-    image = pygame.image.load("background/surface.PNG")
-    image = pygame.transform.scale(image, (500, 200)).convert_alpha()
-    while loop:
-        screen.blit(background_grey, (0, 0))
-        for event in pygame.event.get():
-            loop = exit_game(event, loop)
-        image_rect = image.get_rect()
-        image_rect.midtop = (250, 250 / 2)
-        screen.blit(image, image_rect)
-        pygame.display.update()
-        clock.tick(120)
+    def disable():
+        menu.disable()
+    menu = pygame_menu.Menu('Справка', 500, 500, theme=pygame_menu.themes.THEME_DARK)
+    menu.add.label("Добро пожаловать в игру Arkanoid. \nДля управления платформой "
+                   "\nнажимайте клавиши A и D, для \nзапуска шарика нажмите пробел.\n"
+                   "Чтобы победить надо пройти все уровни. \nА так же набирайте больше очков,\n"
+                   "чтобы быть в топе лидеров", max_char=-1, font_size=17)
+    menu.add.button("Назад", disable)
+    menu.mainloop(screen)
+
+def leaderboard():
+    menu = pygame_menu.Menu('Таблица лидеров', 500, 500, theme=pygame_menu.themes.THEME_DARK)
+    table = menu.add.table(table_id='my_table', font_size=30)
+    table.default_cell_padding = 5
+    table.default_row_background_color = 'red'
+    table.add_row(['Никнейм', 'Счет'], cell_font=pygame_menu.font.FONT_OPEN_SANS_BOLD)
+
+    def disable():
+        menu.disable()
+
+    with open("data", 'r') as f:
+        file_blocks = f.read().splitlines()[0:]
+
+    def add_row(list_data):
+        data_dict = dict()
+        for item in list_data:
+            key = item.split(" ")[0]
+            value = item.split(" ")[1]
+            data_dict[key] = int(value)
+        a = (sorted(data_dict.items(), reverse=True, key=lambda kv: (kv[1], kv[0])))
+        for key, value in a:
+            mas = [key, value]
+            table.add_row(mas)
+
+    add_row(file_blocks)
+    menu.add.button("Назад", disable)
+    menu.mainloop(screen)
+
+def input_leaderboard():
+    menu = pygame_menu.Menu('Ввод данных', 500, 500, theme=pygame_menu.themes.THEME_DARK)
+    check = False
+
+    def disable():
+        menu.disable()
+        start_menu()
+
+    def contains_whitespace(s):
+        return True in [c in s for c in string.whitespace]
+
+    def check_name(value):
+        if not value.strip() or contains_whitespace(value):
+            warning()
+        else:
+            file = open("data", "a")
+            file.write(f"\n{value} {score.get_score()}")
+            file.close()
+            disable()
+    if check:
+        warning()
+    menu.add.text_input('Никнейм: ', maxchar=10, input_underline='_', onreturn=check_name)
+    menu.add.button("Назад", disable)
+    menu.mainloop(screen)
+
+def warning():
+    def disable():
+        input_leaderboard()
+    menu = pygame_menu.Menu('Предупреждение', 500, 500, theme=pygame_menu.themes.THEME_DARK)
+    menu.add.label("Ник содержит пробелы, уберите их", font_size=30)
+    menu.add.button("Назад", disable)
+    menu.mainloop(screen)
 
 def start_game():
     pygame.mouse.set_visible(False)
@@ -460,12 +517,13 @@ def start_game():
         pygame.display.update()
         clock.tick(120)
 
+def start_menu():
+    menu_main = pygame_menu.Menu('Добро пожаловать', 500, 500, theme=pygame_menu.themes.THEME_DARK)
+    menu_main.add.button('Начать игру', start_game)
+    menu_main.add.button('Таблица лидеров', leaderboard)
+    menu_main.add.button('Справка', reference)
+    menu_main.add.button('Выход', pygame_menu.events.EXIT)
+    menu_main.mainloop(screen)
 
-menu = pygame_menu.Menu('Добро пожаловать', 500, 500, theme=pygame_menu.themes.THEME_DARK)
 
-# menu.add.text_input('Name :', default='John Doe')
-# menu.add.selector('Difficulty :', [('Hard', 1), ('Easy', 2)], onchange=set_difficulty)
-menu.add.button('Начать игру', start_game)
-menu.add.button('Справка', reference)
-menu.add.button('Выход', pygame_menu.events.EXIT)
-menu.mainloop(screen)
+start_menu()
