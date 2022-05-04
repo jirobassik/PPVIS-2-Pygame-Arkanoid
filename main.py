@@ -109,7 +109,7 @@ class Ball(pygame.sprite.Sprite):
                     ball_x = "right"
                     pong_bar_sound.play()
             if ball_y == 'down':
-                ball.y += self.speed
+                ball.y += self.speed # sdad
             if ball_y == 'up':
                 ball.y -= self.speed
                 if ball.y < 3:
@@ -203,7 +203,7 @@ def collision():
                 spr.get_sprites().add(pow)
                 powerups.add(pow)
             if ball_y == "up":
-                if ball.y == (brick.y + 20 - ball.get_speed()):
+                if ball.y >= (brick.y + 20):
                     ball_y = "down"
                 else:
                     if ball_x == "left":
@@ -307,6 +307,7 @@ def show_bricks():
 class Update_sprites:
     def __init__(self):
         self.all_sprites = pygame.sprite.Group()
+        self.i = 0
 
     def new_lvl(self):
         self.all_sprites = pygame.sprite.Group()
@@ -314,6 +315,13 @@ class Update_sprites:
         ball.reset()
         self.brick = create_bricks(lvls.pop(0))
         self.all_sprites.add(self.brick, ball, bar)
+        self.print_new_lvl()
+
+    def print_new_lvl(self):
+        self.i += 1
+
+    def print_lvl(self):
+        return draw_text(screen, f'Level {self.i}', 18, 90 / 2, 10)
 
     def get_sprites(self):
         return self.all_sprites
@@ -322,9 +330,9 @@ class Update_sprites:
         return self.brick
 
 
-lvls = ['levels/lvl1', 'levels/lvl2']
+lvls = ['levels/lvl1', 'levels/lvl2', 'levels/lvl3', 'levels/lvl4', 'levels/lvl5', 'levels/lvl6', 'levels/lvl7',
+        'levels/lvl8', 'levels/lvl9', 'levels/lvl10']
 
-#all_sprites = pygame.sprite.Group()
 powerups = pygame.sprite.Group()
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -332,6 +340,7 @@ GREEN = (0, 255, 0)
 ball_x = 'left'
 ball_y = 'down'
 vel_bal = 2
+i = 0
 score = Score()
 pygame.init()
 clock = pygame.time.Clock()
@@ -393,6 +402,7 @@ while loop:
     collision_powerups()
     spr.get_sprites().draw(screen)
     draw_text(screen, str(score.get_score()), 18, 510 / 2, 10)
+    spr.print_lvl()
     pygame.display.update()
     clock.tick(120)
 
