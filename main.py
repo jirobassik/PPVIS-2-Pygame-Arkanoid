@@ -1,6 +1,3 @@
-import threading
-import time
-
 import pygame
 import random
 import pygame_menu
@@ -292,7 +289,6 @@ def collision():
             if not spr.get_brick():
                 if len(spr.get_lvls()) > 0:
                     print_new_lvl()
-                    #time.sleep(2)
                     spr.new_lvl()
                 else:
                     input_leaderboard()
@@ -378,6 +374,7 @@ def print_new_lvl():
     menu.add.label("Новый уровень!", max_char=-1, font_size=30)
     menu.add.button("Продолжить", disable)
     menu.mainloop(screen)
+
 
 num = 0
 powerups = pygame.sprite.Group()
