@@ -1,3 +1,6 @@
+import threading
+import time
+
 import pygame
 import random
 import pygame_menu
@@ -31,7 +34,6 @@ class Brick(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
-
 class Bar(pygame.sprite.Sprite):
     """Draw Player"""
 
@@ -60,13 +62,6 @@ class Bar(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
-        self.borders_map()
-
-    def borders_map(self):
-        if self.rect.x < 2:
-            self.x = 2
-        if self.rect.x > 430:
-            self.x = 430
 
     def big_bar(self):
         self.check_pow_1 = 90
@@ -92,7 +87,6 @@ class Bar(pygame.sprite.Sprite):
 
 class Ball(pygame.sprite.Sprite):
     """Draw Ball"""
-
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
@@ -220,11 +214,11 @@ class Score:
 class Update_sprites:
     def __init__(self):
         self.all_sprites = pygame.sprite.Group()
-        self.brick = None
         self.i = 0
         self.lvls = ['levels/lvl1', 'levels/lvl2', 'levels/lvl3',
                      'levels/lvl4', 'levels/lvl5', 'levels/lvl6',
                      'levels/lvl7', 'levels/lvl8', 'levels/lvl9', 'levels/lvl10']
+        self.brick = None
 
     def new_lvl(self):
         self.all_sprites = pygame.sprite.Group()
@@ -256,7 +250,6 @@ class Update_sprites:
 
     def get_lvls(self):
         return self.lvls
-
 
 def collision():
     if ball.rect.colliderect(bar):
@@ -298,6 +291,8 @@ def collision():
             brick.kill()
             if not spr.get_brick():
                 if len(spr.get_lvls()) > 0:
+                    print_new_lvl()
+                    #time.sleep(2)
                     spr.new_lvl()
                 else:
                     input_leaderboard()
@@ -331,9 +326,8 @@ def exit_game(even, loo):
         loo = 0
     if even.type == pygame.KEYUP:
         if even.key == pygame.K_ESCAPE:
-            loo = 0
+            pause()
     return loo
-
 
 def create_bricks(name_lvl):
     with open(name_lvl, 'r') as f:
@@ -362,7 +356,6 @@ def show_bricks():
     for brick in spr.get_brick():
         brick.update()
 
-
 def reset_data():
     ball.reset()
     bar.reset()
@@ -378,6 +371,13 @@ def draw_text(surf, text, size, x, y):
     text_rect.midtop = (x, y)
     surf.blit(text_surface, text_rect)
 
+def print_new_lvl():
+    def disable():
+        menu.disable()
+    menu = pygame_menu.Menu('', 500, 500, theme=pygame_menu.themes.THEME_DARK)
+    menu.add.label("Новый уровень!", max_char=-1, font_size=30)
+    menu.add.button("Продолжить", disable)
+    menu.mainloop(screen)
 
 num = 0
 powerups = pygame.sprite.Group()
@@ -484,8 +484,19 @@ def warning():
     def disable():
         input_leaderboard()
     menu = pygame_menu.Menu('Предупреждение', 500, 500, theme=pygame_menu.themes.THEME_DARK)
-    menu.add.label("Ник содержит пробелы, уберите их", font_size=30)
+    menu.add.label("Ник содержит пробелы, или \nпустую строку, уберите их", font_size=30)
     menu.add.button("Назад", disable)
+    menu.mainloop(screen)
+
+def pause():
+    def back():
+        start_menu()
+
+    def disable():
+        menu.disable()
+    menu = pygame_menu.Menu('Пауза', 500, 500, theme=pygame_menu.themes.THEME_DARK)
+    menu.add.button("Продолжить", disable)
+    menu.add.button("Выход", back)
     menu.mainloop(screen)
 
 def start_game():
@@ -498,9 +509,9 @@ def start_game():
         keystate = pygame.key.get_pressed()
         for event in pygame.event.get():
             loop = exit_game(event, loop)
-        if keystate[pygame.K_a]:
+        if keystate[pygame.K_a] and bar.rect.left > 0:
             bar.x -= 8
-        if keystate[pygame.K_d]:
+        if keystate[pygame.K_d] and bar.rect.right <= 500:
             bar.x += 8
         if keystate[pygame.K_SPACE]:
             ball.start()
